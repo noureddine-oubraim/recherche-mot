@@ -63,6 +63,33 @@ std::vector<size_t> rechercherAvecFind(const std::string& motPrincipal, const st
 }
 
 /**
+ * Remplace toutes les occurrences d'une sous-chaîne par une autre.
+ * Exemple : remplacerSousChaine("bonjour monde", "monde", "amis") -> "bonjour amis"
+ */
+std::string remplacerSousChaine(const std::string& texte, const std::string& ancien, const std::string& nouveau) {
+    if (ancien.empty()) {
+        return texte;
+    }
+
+    std::string resultat;
+    size_t debut = 0;
+
+    while (debut <= texte.length()) {
+        size_t pos = texte.find(ancien, debut);
+        if (pos == std::string::npos) {
+            resultat += texte.substr(debut);
+            break;
+        }
+
+        resultat += texte.substr(debut, pos - debut);
+        resultat += nouveau;
+        debut = pos + ancien.length();
+    }
+
+    return resultat;
+}
+
+/**
  * Affiche les résultats de la recherche et le temps d'exécution
  */
 void afficherResultats(const std::string& nomMethode, const std::vector<size_t>& positions, double tempsNanosecondes) {
@@ -103,25 +130,62 @@ int main() {
     std::string motPrincipal = buffer.str();
     fichier.close();
 
-    std::string sousMot;
+    int choix;
+    std::cout << "Que voulez-vous faire ?\n";
+    std::cout << "1. Rechercher un mot\n";
+    std::cout << "2. Modifier le fichier\n";
+    std::cout << "Votre choix : ";
+    std::cin >> choix;
+    std::cin.ignore();
 
-    // Saisie du mot à rechercher par l'utilisateur
-    std::cout << "Mot a rechercher : ";
-    std::getline(std::cin, sousMot);
-    
-    // Mesure du temps : From Scratch
-    auto debutScratch = std::chrono::high_resolution_clock::now();
-    std::vector<size_t> resScratch = rechercherFromScratch(motPrincipal, sousMot);
-    auto finScratch = std::chrono::high_resolution_clock::now();
-    double tempsScratch = std::chrono::duration<double, std::nano>(finScratch - debutScratch).count();
-    afficherResultats("From Scratch", resScratch, tempsScratch);
+    if (choix == 1) {
+        std::string sousMot;
 
-    // Mesure du temps : std::string::find
-    auto debutFind = std::chrono::high_resolution_clock::now();
-    std::vector<size_t> resFind = rechercherAvecFind(motPrincipal, sousMot);
-    auto finFind = std::chrono::high_resolution_clock::now();
-    double tempsFind = std::chrono::duration<double, std::nano>(finFind - debutFind).count();
-    afficherResultats("std::string::find", resFind, tempsFind);
+        // Saisie du mot à rechercher par l'utilisateur
+        std::cout << "Mot a rechercher : ";
+        std::getline(std::cin, sousMot);
+
+        // Mesure du temps : From Scratch
+        auto debutScratch = std::chrono::high_resolution_clock::now();
+        std::vector<size_t> resScratch = rechercherFromScratch(motPrincipal, sousMot);
+        auto finScratch = std::chrono::high_resolution_clock::now();
+        double tempsScratch = std::chrono::duration<double, std::nano>(finScratch - debutScratch).count();
+        afficherResultats("From Scratch", resScratch, tempsScratch);
+
+        // Mesure du temps : std::string::find
+        auto debutFind = std::chrono::high_resolution_clock::now();
+        std::vector<size_t> resFind = rechercherAvecFind(motPrincipal, sousMot);
+        auto finFind = std::chrono::high_resolution_clock::now();
+        double tempsFind = std::chrono::duration<double, std::nano>(finFind - debutFind).count();
+        afficherResultats("std::string::find", resFind, tempsFind);
+    }
+    else if (choix == 2) {
+        std::string ancienMot;
+        std::string nouveauMot;
+
+        std::cout << "Mot a remplacer : ";
+        std::getline(std::cin, ancienMot);
+
+        std::cout << "Nouveau mot : ";
+        std::getline(std::cin, nouveauMot);
+
+        std::string texteModifie = remplacerSousChaine(motPrincipal, ancienMot, nouveauMot);
+
+        std::ofstream fichierSortie(nomFichierComplet, std::ios::trunc);
+        if (!fichierSortie.is_open()) {
+            std::cerr << "Erreur: Impossible d'ecrire dans le fichier '" << nomFichierComplet << "'.\n";
+            return 1;
+        }
+
+        fichierSortie << texteModifie;
+        fichierSortie.close();
+
+        std::cout << "Modification appliquee dans le fichier '" << nomFichier << "'.\n";
+    }
+    else {
+        std::cerr << "Choix invalide. Veuillez choisir 1 ou 2.\n";
+        return 1;
+    }
 
     return 0;
 }
